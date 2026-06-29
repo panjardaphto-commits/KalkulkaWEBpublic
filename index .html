@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kalkulka HQ</title>
+    <style>
+        :root {
+            --alza-green: #22d3ee; 
+            --alza-action: #84cc16; 
+            --bg-main: #f3f4f6; 
+            --bg-card: #ffffff; 
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --border-radius: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            padding-bottom: 100px; 
+            overflow-x: hidden;
+        }
+
+        /* Horní panel */
+        .header {
+            background-color: #111827;
+            color: white;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            height: 60px;
+        }
+
+        .logo {
+            font-weight: 900;
+            font-size: 20px;
+            color: #fff;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            height: 100%;
+            padding: 5px;
+        }
+
+        .logo span {
+            color: var(--alza-action);
+        }
+
+        .header-icons {
+            display: flex;
+            gap: 16px;
+            color: var(--text-muted);
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        /* Spodní navigace */
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #ffffff;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+            z-index: 100;
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            min-height: 52px;
+        }
+
+        .nav-item.active {
+            color: var(--alza-green);
+        }
+
+        .nav-item svg {
+            width: 24px;
+            height: 24px;
+            margin-bottom: 2px;
+        }
+
+        /* Obsah / Stránky */
+        .page {
+            display: none;
+            padding: 16px;
+            max-width: 500px;
+            margin: 0 auto;
+            animation: fadeIn 0.15s ease-out;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Společné komponenty - Karty */
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--border-radius);
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #111827;
+        }
+
+        .search-mock {
+            background: #e5e7eb;
+            border-radius: 24px;
+            padding: 12px 16px;
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Hero karta */
+        .hero-card {
+            background: linear-gradient(135deg, #1e3a8a, #0f172a);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-text h1 { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+        .hero-text p { font-size: 14px; opacity: 0.8; }
+
+        .alzak-avatar {
+            position: absolute;
+            right: 12px;
+            bottom: -10px;
+            width: 80px;
+            height: 100px;
+            background: #22c55e;
+            border-radius: 40px 40px 10px 10px;
+        }
+        .alzak-avatar::before {
+            content: ''; position: absolute; top: 15px; left: 15px;
+            width: 15px; height: 15px; background: white; border-radius: 50%;
+            box-shadow: 35px 0 0 white;
+        }
+        .alzak-avatar::after {
+            content: '🍪'; position: absolute; bottom: 20px; left: 25px; font-size: 24px;
+        }
+
+        /* Dlaždice rychlého přístupu */
+        .grid-tiles {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .tile {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 18px 12px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+            border: 1px solid transparent;
+            min-height: 54px;
+        }
+        .tile:active { background-color: #f9fafb; border-color: var(--alza-green); }
+
+        /* KPI bloky */
+        .kpi-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .kpi-card {
+            background: white;
+            padding: 12px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+        .kpi-card.large { grid-column: span 2; background: #f0fdf4; border: 1px solid #bbf7d0;}
+        .kpi-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;}
+        .kpi-value { font-size: 18px; font-weight: 800; margin-top: 4px;}
+        .kpi-card.large .kpi-value { font-size: 28px; color: #16a34a; }
+
+        /* Formulářové prvky */
+        .form-group {
+            margin-bottom: 12px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: var(--text-main);
+        }
+        .form-control {
+            width: 100%;
+            height: 48px; 
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 0 12px;
+            font-size: 16px;
+            font-weight: 600;
+            background-color: #fafafa;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--alza-green);
+            background-color: #fff;
+        }
+
+        /* Progress bary */
+        .progress-container { margin-bottom: 12px; }
+        .progress-info { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; margin-bottom: 4px; }
+        .progress-bar-bg { background: #e5e7eb; height: 10px; border-radius: 5px; overflow: hidden; }
+        .progress-bar-fill { background: var(--alza-action); height: 100%; width: 0%; transition: width 0.3s ease; }
+
+        /* Tlačítka */
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 52px;
+            background: var(--alza-action);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .btn:active { opacity: 0.9; }
+        .btn-danger { background: #ef4444; }
+
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 14px;
+            border-bottom: 1px dashed #e5e7eb;
+        }
+        .data-row:last-child { border-bottom: none; font-weight: 700; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="logo" id="header-logo-btn" onclick="switchPage('home')" ontouchstart="switchPage('home')">Alza<span>.cz</span> <small style="font-size:10px; opacity:0.5; margin-left:5px;">Kalkulka</small></div>
+        <div class="header-icons" onclick="switchPage('settings')" ontouchstart="switchPage('settings')">⚙️</div>
+    </div>
+
+    <div id="page-home" class="page active">
+        <div class="search-mock">🔍 Jakou výplatu dneska čekáš?</div>
+        
+        <div class="card hero-card">
+            <div class="hero-text">
+                <h1>Výplatní kalkulačka</h1>
+                <p>HQ Roadmap Edice 2026</p>
+            </div>
+            <div class="alzak-avatar"></div>
+        </div>
+
+        <div class="grid-tiles">
+            <div class="tile" onclick="switchPage('calc')" ontouchstart="switchPage('calc')">🧮 Výpočet mzdy</div>
+            <div class="tile" onclick="switchPage('goal')" ontouchstart="switchPage('goal')">🎯 Průběh cíle</div>
+            <div class="tile" onclick="switchPage('stats')" ontouchstart="switchPage('stats')">📊 Statistiky</div>
+            <div class="tile" onclick="switchPage('archive')" ontouchstart="switchPage('archive')">📂 Archiv měsíců</div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Poslední odhad čisté mzdy</div>
+            <div style="font-size: 32px; font-weight: 900; color: #16a34a;" id="home-last-salary">0 Kč</div>
+            <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;" id="home-last-month">-</p>
+        </div>
+    </div>
+
+    <div id="page-calc" class="page">
+        <div class="card">
+            <div class="card-title">Vstupní hodnoty pro výpočet</div>
+            <div class="form-group">
+                <label>Název měsíce</label>
+                <input type="text" id="in-month" class="form-control" value="Červenec 2026">
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div class="form-group">
+                    <label>Cíl ŽELEZO (Kč)</label>
+                    <input type="number" inputmode="decimal" id="in-goal-iron" class="form-control" value="500000">
+                </div>
+                <div class="form-group">
+                    <label>Prodej ŽELEZO (Kč)</label>
+                    <input type="number" inputmode="decimal" id="in-sales-iron" class="form-control" value="520000">
+                </div>
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div class="form-group">
+                    <label>Cíl SLUŽBY (Kč)</label>
+                    <input type="number" inputmode="decimal" id="in-goal-serv" class="form-control" value="50000">
+                </div>
+                <div class="form-group">
+                    <label>Prodej SLUŽBY (Kč)</label>
+                    <input type="number" inputmode="decimal" id="in-sales-serv" class="form-control" value="48000">
+                </div>
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div class="form-group">
+                    <label>Víkendové hodiny</label>
+                    <input type="number" inputmode="decimal" id="in-hours-we" class="form-control" value="16">
+                </div>
+                <div class="form-group">
+                    <label>Sváteční hodiny</label>
+                    <input type="number" inputmode="decimal" id="in-hours-hly" class="form-control" value="8">
+                </div>
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div class="form-group">
+                    <label>Mimořádná odměna</label>
+                    <input type="number" inputmode="decimal" id="in-bonus" class="form-control" value="0">
+                </div>
+                <div class="form-group">
+                    <label>Srážky (MOL, stravenky)</label>
+                    <input type="number" inputmode="decimal" id="in-deduct" class="form-control" value="800">
+                </div>
+            </div>
+        </div>
+
+        <div class="kpi-container">
+            <div class="kpi-card large">
+                <div class="kpi-label">Odhad čisté mzdy</div>
+                <div class="kpi-value" id="res-net-salary">0 Kč</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Hrubá mzda</div>
+                <div class="kpi-value" id="res-gross-salary">0 Kč</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Násobič provizí</div>
+                <div class="kpi-value" id="res-multiplier">1.00x</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Plnění cílů</div>
+            <div class="progress-container">
+                <div class="progress-info"><span>Železo</span><span id="lbl-p-iron">0%</span></div>
+                <div class="progress-bar-bg"><div id="bar-iron" class="progress-bar-fill"></div></div>
+            </div>
+            <div class="progress-container">
+                <div class="progress-info"><span>Služby</span><span id="lbl-p-serv">0%</span></div>
+                <div class="progress-bar-bg"><div id="bar-serv" class="progress-bar-fill"></div></div>
+            </div>
+            <div class="progress-container">
+                <div class="progress-info"><span>Celkové plnění</span><span id="lbl-p-total">0%</span></div>
+                <div class="progress-bar-bg"><div id="bar-total" class="progress-bar-fill" style="background-color: var(--alza-green)"></div></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Rozpis položek mzdy</div>
+            <div class="data-row"><span>Základní mzda:</span><span id="det-base">0 Kč</span></div>
+            <div class="data-row"><span>Provize Železo:</span><span id="det-iron">0 Kč</span></div>
+            <div class="data-row"><span>Provize Služby:</span><span id="det-serv">0 Kč</span></div>
+            <div class="data-row"><span>Víkendové příplatky:</span><span id="det-we">0 Kč</span></div>
+            <div class="data-row"><span>Sváteční příplatky:</span><span id="det-hly">0 Kč</span></div>
+            <div class="data-row"><span>Mimořádná odměna:</span><span id="det-bonus">0 Kč</span></div>
+            <div class="data-row"><span>Sociální pojištění:</span><span id="det-soc" style="color:red;">0 Kč</span></div>
+            <div class="data-row"><span>Zdravotní pojištění:</span><span id="det-med" style="color:red;">0 Kč</span></div>
+            <div class="data-row"><span>Záloha na daň:</span><span id="det-tax" style="color:red;">0 Kč</span></div>
+            <div class="data-row"><span>Srážky z čisté mzdy:</span><span id="det-deduct" style="color:red;">0 Kč</span></div>
+        </div>
+
+        <div class="card" style="text-align: center;">
+            <div class="card-title" style="text-align: left;">Podíl provizí: Železo vs Služby</div>
+            <svg width="150" height="150" viewBox="0 0 32 32" style="transform: rotate(-90deg); border-radius: 50%;">
+                <circle r="16" cx="16" cy="16" fill="#84cc16" />
+                <circle id="pie-slice" r="16" cx="16" cy="16" fill="#22d3ee" stroke-dasharray="50 100" />
+            </svg>
+            <div style="display:flex; justify-content: center; gap: 15px; margin-top: 10px; font-size:12px; font-weight:700;">
+                <span style="color:#22d3ee;">■ Železo</span>
+                <span style="color:#84cc16;">■ Služby</span>
+            </div>
+        </div>
+
+        <button class="btn" onclick="archiveCurrentMonth()" ontouchstart="archiveCurrentMonth()">💾 Uložit do archivu</button>
+    </div>
+
+    <div id="page-goal" class="page">
+        <div class="card">
+            <div class="card-title">Aktuální stav směny / měsíce</div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div class="form-group">
+                    <label>Uběhlé dny v měsíci</label>
+                    <input type="number" id="goal-days-passed" class="form-control" value="15">
+                </div>
+                <div class="form-group">
+                    <label>Celkem dní v měsíci</label>
+                    <input type="number" id="goal-days-total" class="form-control" value="30">
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Kolik zbývá prodat pro 100% cíl</div>
+            <div class="data-row"><span>Železo zbývá:</span><span id="goal-rem-iron" style="font-weight:700;">0 Kč</span></div>
+            <div class="data-row"><span>Služby zbývá:</span><span id="goal-rem-serv" style="font-weight:700;">0 Kč</span></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Potřebné denní tempo</div>
+            <div class="data-row"><span>Denně Železo:</span><span id="goal-tempo-iron" style="color:var(--alza-green); font-weight:700;">0 Kč</span></div>
+            <div class="data-row"><span>Denně Služby:</span><span id="goal-tempo-serv" style="color:var(--alza-green); font-weight:700;">0 Kč</span></div>
+        </div>
+    </div>
+
+    <div id="page-stats" class="page">
+        <div class="card">
+            <div class="card-title">Vývoj čisté mzdy</div>
+            <svg id="stats-salary-chart" width="100%" height="150" style="background: #f9fafb; padding: 10px; border-radius: 8px;">
+                </svg>
+        </div>
+        <div class="card">
+            <div class="card-title">Kvartální souhrny (Odhad)</div>
+            <div class="data-row"><span>Q1 Celkem:</span><span id="q-q1">0 Kč</span></div>
+            <div class="data-row"><span>Q2 Celkem:</span><span id="q-q2">0 Kč</span></div>
+            <div class="data-row"><span>Q3 Celkem:</span><span id="q-q3">0 Kč</span></div>
+            <div class="data-row"><span>Q4 Celkem:</span><span id="q-q4">0 Kč</span></div>
+        </div>
+    </div>
+
+    <div id="page-archive" class="page">
+        <div class="card-title">Historie uložených měsíců</div>
+        <div id="archive-list"></div>
+        <button class="btn btn-danger" onclick="clearArchive()" ontouchstart="clearArchive()" style="margin-top: 20px;">🗑️ Vymazat celý archiv</button>
+    </div>
+
+    <div id="page-settings" class="page">
+        <div class="card">
+            <div class="card-title">Konstanty a parametry výpočtu</div>
+            <div class="form-group">
+                <label>Základní mzda (Kč)</label>
+                <input type="number" id="cfg-base" class="form-control" value="25000">
+            </div>
+            <div class="form-group">
+                <label>Sazba provize ŽELEZO</label>
+                <input type="number" step="0.0001" id="cfg-rate-iron" class="form-control" value="0.0068">
+            </div>
+            <div class="form-group">
+                <label>Sazba provize SLUŽBY</label>
+                <input type="number" step="0.0001" id="cfg-rate-serv" class="form-control" value="0.075">
+            </div>
+            <div class="form-group">
+                <label>Maximální násobič</label>
+                <input type="number" step="0.1" id="cfg-max-mult" class="form-control" value="1.2">
+            </div>
+            <div class="form-group">
+                <label>Víkendová sazba (Kč/h)</label>
+                <input type="number" step="0.01" id="cfg-we-rate" class="form-control" value="65.22">
+            </div>
+            <div class="form-group">
+                <label>Sváteční hodinová sazba (Kč/h)</label>
+                <input type="number" id="cfg-hly-rate" class="form-control" value="180">
+            </div>
+            <div class="form-group">
+                <label>Sleva na poplatníka (Kč)</label>
+                <input type="number" id="cfg-tax-discount" class="form-control" value="2570">
+            </div>
+            <button class="btn" onclick="saveSettings()" ontouchstart="saveSettings()">💾 Uložit nastavení</button>
+            <button class="btn btn-danger" onclick="resetSettings()" ontouchstart="resetSettings()" style="margin-top:8px;">🔄 Obnovit výchozí parametry</button>
+        </div>
+    </div>
+
+    <div class="nav-bar">
+        <button id="nav-btn-home" class="nav-item active" onclick="switchPage('home')">
+            <svg fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+            Domů
+        </button>
+        <button id="nav-btn-calc" class="nav-item" onclick="switchPage('calc')">
+            <svg fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-4 6h-2v2h2v2h-2v2h2v2h-2v-2h-2v2H9v-2h2v-2H9v-2h2V9H9V7h2v2h2V7h2v2z"/></svg>
+            Mzda
+        </button>
+        <button id="nav-btn-goal" class="nav-item" onclick="switchPage('goal')">
+            <svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L11 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.53c-.26-.81-1-1.4-1.9-1.4h-1v-3c0-.55-.45-1-1-1h-6v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+            Cíl
+        </button>
+        <button id="nav-btn-stats" class="nav-item" onclick="switchPage('stats')">
+            <svg fill="currentColor" viewBox="0 0 24 24"><path d="M10 20h4V4h-4v16zm-6 0h4v-8H4v8zM16 9v11h4V9h-4z"/></svg>
+            Grafy
+        </button>
+        <button id="nav-btn-archive" class="nav-item" onclick="switchPage('archive')">
+            <svg fill="currentColor" viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>
+            Archiv
+        </button>
+    </div>
+
+    <script>
+        let settings = {};
+        let archive = [];
+
+        const defaultSettings = {
+            baseSalary: 25000,
+            rateIron: 0.0068,
+            rateServ: 0.075,
+            maxMult: 1.20,
+            weRate: 65.22,
+            hlyRate: 180,
+            taxDiscount: 2570
+        };
+
+        // Hlavní spouštěcí funkce po načtení dokumentu
+        window.addEventListener('DOMContentLoaded', () => {
+            loadDataFromStorage();
+            initListeners();
+            recalculateAll();
+        });
+
+        // 100% Funkční přepínání obrazovek
+        function switchPage(pageId) {
+            // Skryj všechny stránky
+            document.querySelectorAll('.page').forEach(page => {
+                page.style.display = 'none';
+                page.classList.remove('active');
+            });
+
+            // Zobraz vybranou stránku
+            const targetPage = document.getElementById('page-' + pageId);
+            if(targetPage) {
+                targetPage.style.display = 'block';
+                targetPage.classList.add('active');
+            }
+
+            // Aktualizuj aktivní třídu ve spodním menu
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            
+            const targetNavBtn = document.getElementById('nav-btn-' + pageId);
+            if(targetNavBtn) {
+                targetNavBtn.classList.add('active');
+            }
+
+            // Posun na začátek obrazovky pro eliminaci špatného scrollování
+            window.scrollTo(0,0);
+        }
+
+        function loadDataFromStorage() {
+            const storedCfg = localStorage.getItem('kalkulka_cfg');
+            settings = storedCfg ? JSON.parse(storedCfg) : {...defaultSettings};
+            
+            const storedArchive = localStorage.getItem('kalkulka_archive');
+            archive = storedArchive ? JSON.parse(storedArchive) : [];
+
+            document.getElementById('cfg-base').value = settings.baseSalary;
+            document.getElementById('cfg-rate-iron').value = settings.rateIron;
+            document.getElementById('cfg-rate-serv').value = settings.rateServ;
+            document.getElementById('cfg-max-mult').value = settings.maxMult;
+            document.getElementById('cfg-we-rate').value = settings.weRate;
+            document.getElementById('cfg-hly-rate').value = settings.hlyRate;
+            document.getElementById('cfg-tax-discount').value = settings.taxDiscount;
+
+            renderArchive();
+            updateHomeSummary();
+        }
+
+        function initListeners() {
+            const inputs = ['in-goal-iron', 'in-sales-iron', 'in-goal-serv', 'in-sales-serv', 'in-hours-we', 'in-hours-hly', 'in-bonus', 'in-deduct', 'goal-days-passed', 'goal-days-total'];
+            inputs.forEach(id => {
+                const el = document.getElementById(id);
+                if(el) {
+                    el.addEventListener('input', recalculateAll);
+                    el.addEventListener('change', recalculateAll);
+                }
+            });
+        }
+
+        function recalculateAll() {
+            const goalIron = parseFloat(document.getElementById('in-goal-iron').value) || 0;
+            const salesIron = parseFloat(document.getElementById('in-sales-iron').value) || 0;
+            const goalServ = parseFloat(document.getElementById('in-goal-serv').value) || 0;
+            const salesServ = parseFloat(document.getElementById('in-sales-serv').value) || 0;
+            const hoursWe = parseFloat(document.getElementById('in-hours-we').value) || 0;
+            const hoursHly = parseFloat(document.getElementById('in-hours-hly').value) || 0;
+            const inputBonus = parseFloat(document.getElementById('in-bonus').value) || 0;
+            const inputDeduct = parseFloat(document.getElementById('in-deduct').value) || 0;
+
+            const pctIron = goalIron > 0 ? (salesIron / goalIron) * 100 : 0;
+            const pctServ = goalServ > 0 ? (salesServ / goalServ) * 100 : 0;
+            const totalGoal = goalIron + goalServ;
+            const totalSales = salesIron + salesServ;
+            const pctTotal = totalGoal > 0 ? (totalSales / totalGoal) * 100 : 0;
+
+            document.getElementById('lbl-p-iron').innerText = pctIron.toFixed(1) + '%';
+            document.getElementById('bar-iron').style.width = Math.min(pctIron, 100) + '%';
+            document.getElementById('lbl-p-serv').innerText = pctServ.toFixed(1) + '%';
+            document.getElementById('bar-serv').style.width = Math.min(pctServ, 100) + '%';
+            document.getElementById('lbl-p-total').innerText = pctTotal.toFixed(1) + '%';
+            document.getElementById('bar-total').style.width = Math.min(pctTotal, 100) + '%';
+
+            let multiplier = 1.0;
+            if (pctTotal > 100) {
+                multiplier = 1.0 + ((pctTotal - 100) / 100);
+            }
+            multiplier = Math.min(multiplier, settings.maxMult);
+            document.getElementById('res-multiplier').innerText = multiplier.toFixed(2) + 'x';
+
+            const commIron = salesIron * settings.rateIron * multiplier;
+            const commServ = salesServ * settings.rateServ * multiplier;
+            const payWe = hoursWe * settings.weRate;
+            const payHly = hoursHly * settings.hlyRate;
+
+            const grossSalary = settings.baseSalary + commIron + commServ + payWe + payHly + inputBonus;
+
+            const socWorker = Math.round(grossSalary * 0.071); 
+            const medWorker = Math.round(grossSalary * 0.045); 
+            let taxPreDiscount = Math.round(grossSalary * 0.15);
+            let finalTax = Math.max(0, taxPreDiscount - settings.taxDiscount);
+
+            const netSalary = Math.max(0, grossSalary - socWorker - medWorker - finalTax - inputDeduct);
+
+            document.getElementById('res-net-salary').innerText = Math.round(netSalary).toLocaleString() + ' Kč';
+            document.getElementById('res-gross-salary').innerText = Math.round(grossSalary).toLocaleString() + ' Kč';
+            
+            document.getElementById('det-base').innerText = settings.baseSalary.toLocaleString() + ' Kč';
+            document.getElementById('det-iron').innerText = Math.round(commIron).toLocaleString() + ' Kč';
+            document.getElementById('det-serv').innerText = Math.round(commServ).toLocaleString() + ' Kč';
+            document.getElementById('det-we').innerText = Math.round(payWe).toLocaleString() + ' Kč';
+            document.getElementById('det-hly').innerText = Math.round(payHly).toLocaleString() + ' Kč';
+            document.getElementById('det-bonus').innerText = Math.round(inputBonus).toLocaleString() + ' Kč';
+            document.getElementById('det-soc').innerText = '-' + socWorker.toLocaleString() + ' Kč';
+            document.getElementById('det-med').innerText = '-' + medWorker.toLocaleString() + ' Kč';
+            document.getElementById('det-tax').innerText = '-' + finalTax.toLocaleString() + ' Kč';
+            document.getElementById('det-deduct').innerText = '-' + inputDeduct.toLocaleString() + ' Kč';
+
+            const totalComm = commIron + commServ;
+            let slicePct = 50;
+            if(totalComm > 0) {
+                slicePct = (commIron / totalComm) * 100;
+            }
+            document.getElementById('pie-slice').setAttribute('stroke-dasharray', `${slicePct} 100`);
+
+            calculateGoalMetrics();
+        }
+
+        function calculateGoalMetrics() {
+            const goalIron = parseFloat(document.getElementById('in-goal-iron').value) || 0;
+            const salesIron = parseFloat(document.getElementById('in-sales-iron').value) || 0;
+            const goalServ = parseFloat(document.getElementById('in-goal-serv').value) || 0;
+            const salesServ = parseFloat(document.getElementById('in-sales-serv').value) || 0;
+
+            const daysPassed = parseFloat(document.getElementById('goal-days-passed').value) || 1;
+            const daysTotal = parseFloat(document.getElementById('goal-days-total').value) || 30;
+            const daysRemaining = Math.max(0, daysTotal - daysPassed);
+
+            const remIron = Math.max(0, goalIron - salesIron);
+            const remServ = Math.max(0, goalServ - salesServ);
+
+            document.getElementById('goal-rem-iron').innerText = remIron.toLocaleString() + ' Kč';
+            document.getElementById('goal-rem-serv').innerText = remServ.toLocaleString() + ' Kč';
+
+            const tempoIron = daysRemaining > 0 ? (remIron / daysRemaining) : 0;
+            const tempoServ = daysRemaining > 0 ? (remServ / daysRemaining) : 0;
+
+            document.getElementById('goal-tempo-iron').innerText = Math.round(tempoIron).toLocaleString() + ' Kč / den';
+            document.getElementById('goal-tempo-serv').innerText = Math.round(tempoServ).toLocaleString() + ' Kč / den';
+        }
+
+        function saveSettings() {
+            settings.baseSalary = parseFloat(document.getElementById('cfg-base').value) || 0;
+            settings.rateIron = parseFloat(document.getElementById('cfg-rate-iron').value) || 0;
+            settings.rateServ = parseFloat(document.getElementById('cfg-rate-serv').value) || 0;
+            settings.maxMult = parseFloat(document.getElementById('cfg-max-mult').value) || 1.2;
+            settings.weRate = parseFloat(document.getElementById('cfg-we-rate').value) || 0;
+            settings.hlyRate = parseFloat(document.getElementById('cfg-hly-rate').value) || 0;
+            settings.taxDiscount = parseFloat(document.getElementById('cfg-tax-discount').value) || 0;
+
+            localStorage.setItem('kalkulka_cfg', JSON.stringify(settings));
+            alert('Nastavení uloženo offline do paměti.');
+            recalculateAll();
+            switchPage('calc');
+        }
+
+        function resetSettings() {
+            if(confirm('Resetovat parametry na výchozí hodnoty Alza?')) {
+                settings = {...defaultSettings};
+                localStorage.setItem('kalkulka_cfg', JSON.stringify(settings));
+                loadDataFromStorage();
+                recalculateAll();
+            }
+        }
+
+        function archiveCurrentMonth() {
+            const monthName = document.getElementById('in-month').value || 'Neznámý měsíc';
+            const netSalaryStr = document.getElementById('res-net-salary').innerText;
+            const netVal = parseInt(netSalaryStr.replace(/[^0-9]/g, '')) || 0;
+            
+            const salesIron = parseFloat(document.getElementById('in-sales-iron').value) || 0;
+            const salesServ = parseFloat(document.getElementById('in-sales-serv').value) || 0;
+            const mult = document.getElementById('res-multiplier').innerText;
+
+            const record = {
+                id: Date.now(),
+                month: monthName,
+                net: netVal,
+                iron: salesIron,
+                serv: salesServ,
+                multiplier: mult
+            };
+
+            archive.push(record);
+            localStorage.setItem('kalkulka_archive', JSON.stringify(archive));
+            
+            renderArchive();
+            updateHomeSummary();
+            alert(`Měsíc "${monthName}" uložen.`);
+            switchPage('archive');
+        }
+
+        function renderArchive() {
+            const list = document.getElementById('archive-list');
+            if(!list) return;
+            list.innerHTML = '';
+
+            if(archive.length === 0) {
+                list.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:20px;">V archivu nejsou žádná data.</p>';
+                return;
+            }
+
+            [...archive].reverse().forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <strong style="font-size:16px;">${item.month}</strong>
+                        <span style="color:#16a34a; font-weight:800; font-size:18px;">${item.net.toLocaleString()} Kč</span>
+                    </div>
+                    <div style="font-size:12px; color:var(--text-muted)">
+                        Železo: ${item.iron.toLocaleString()} Kč | Služby: ${item.serv.toLocaleString()} Kč <br>
+                        Násobič: <strong>${item.multiplier}</strong>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+
+            renderChartsAndQuarters();
+        }
+
+        function updateHomeSummary() {
+            if(archive.length > 0) {
+                const last = archive[archive.length - 1];
+                document.getElementById('home-last-salary').innerText = last.net.toLocaleString() + ' Kč';
+                document.getElementById('home-last-month').innerText = 'Naposledy: ' + last.month;
+            } else {
+                document.getElementById('home-last-salary').innerText = '0 Kč';
+                document.getElementById('home-last-month').innerText = 'Žádné záznamy';
+            }
+        }
+
+        function clearArchive() {
+            if(confirm('Opravdu vymazat celý archiv?')) {
+                archive = [];
+                localStorage.removeItem('kalkulka_archive');
+                renderArchive();
+                updateHomeSummary();
+            }
+        }
+
+        function renderChartsAndQuarters() {
+            const svg = document.getElementById('stats-salary-chart');
+            if(!svg) return;
+            svg.innerHTML = '';
+
+            if(archive.length === 0) return;
+
+            let q1 = 0, q2 = 0, q3 = 0, q4 = 0;
+            const limitedArchive = archive.slice(-5);
+            const maxNet = Math.max(...archive.map(a => a.net), 10000);
+
+            const width = svg.clientWidth || 340;
+            const height = 110;
+            const barWidth = 35;
+            const gap = (width - (limitedArchive.length * barWidth)) / (limitedArchive.length + 1);
+
+            limitedArchive.forEach((item, index) => {
+                const barHeight = (item.net / maxNet) * height;
+                const x = gap + index * (barWidth + gap);
+                const y = height - barHeight + 15;
+
+                const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                rect.setAttribute('x', x);
+                rect.setAttribute('y', y);
+                rect.setAttribute('width', barWidth);
+                rect.setAttribute('height', Math.max(barHeight, 2));
+                rect.setAttribute('fill', '#22d3ee');
+                rect.setAttribute('rx', '4');
+                svg.appendChild(rect);
+
+                const textVal = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                textVal.setAttribute('x', x + barWidth/2);
+                textVal.setAttribute('y', y - 4);
+                textVal.setAttribute('fill', '#111827');
+                textVal.setAttribute('font-size', '9px');
+                textVal.setAttribute('font-weight', '700');
+                textVal.setAttribute('text-anchor', 'middle');
+                textVal.textContent = Math.round(item.net/1000) + 'k';
+                svg.appendChild(textVal);
+
+                const textMonth = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                textMonth.setAttribute('x', x + barWidth/2);
+                textMonth.setAttribute('y', height + 28);
+                textMonth.setAttribute('fill', '#6b7280');
+                textMonth.setAttribute('font-size', '9px');
+                textMonth.setAttribute('text-anchor', 'middle');
+                textMonth.textContent = item.month.substring(0, 5);
+                svg.appendChild(textMonth);
+
+                const m = item.month.toLowerCase();
+                if(m.includes('led') || m.includes('úno') || m.includes('bře')) q1 += item.net;
+                else if(m.includes('dub') || m.includes('kvě') || m.includes('čer')) q2 += item.net;
+                else if(m.includes('čvc') || m.includes('srp') || m.includes('zář')) q3 += item.net;
+                else q4 += item.net;
+            });
+
+            document.getElementById('q-q1').innerText = q1.toLocaleString() + ' Kč';
+            document.getElementById('q-q2').innerText = q2.toLocaleString() + ' Kč';
+            document.getElementById('q-q3').innerText = q3.toLocaleString() + ' Kč';
+            document.getElementById('q-q4').innerText = q4.toLocaleString() + ' Kč';
+        }
+    </script>
+</body>
+</html>
